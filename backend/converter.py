@@ -21,11 +21,22 @@ VOLTAGE = "voltage"
 
 
 UNITS: Dict[str, UnitDefinition] = {
-    "A": UnitDefinition(symbol="A", category=CURRENT, factor_to_base=Decimal("1")),
-    "mA": UnitDefinition(symbol="mA", category=CURRENT, factor_to_base=Decimal("0.001")),
+    # Current
+    "pA": UnitDefinition(symbol="pA", category=CURRENT, factor_to_base=Decimal("0.000000000001")),
+    "nA": UnitDefinition(symbol="nA", category=CURRENT, factor_to_base=Decimal("0.000000001")),
     "µA": UnitDefinition(symbol="µA", category=CURRENT, factor_to_base=Decimal("0.000001")),
-    "V": UnitDefinition(symbol="V", category=VOLTAGE, factor_to_base=Decimal("1")),
+    "mA": UnitDefinition(symbol="mA", category=CURRENT, factor_to_base=Decimal("0.001")),
+    "A": UnitDefinition(symbol="A", category=CURRENT, factor_to_base=Decimal("1")),
+    "kA": UnitDefinition(symbol="kA", category=CURRENT, factor_to_base=Decimal("1000")),
+    "MA": UnitDefinition(symbol="MA", category=CURRENT, factor_to_base=Decimal("1000000")),
+    "GA": UnitDefinition(symbol="GA", category=CURRENT, factor_to_base=Decimal("1000000000")),
+
+    # Voltage
+    "µV": UnitDefinition(symbol="µV", category=VOLTAGE, factor_to_base=Decimal("0.000001")),
     "mV": UnitDefinition(symbol="mV", category=VOLTAGE, factor_to_base=Decimal("0.001")),
+    "V": UnitDefinition(symbol="V", category=VOLTAGE, factor_to_base=Decimal("1")),
+    "kV": UnitDefinition(symbol="kV", category=VOLTAGE, factor_to_base=Decimal("1000")),
+    "MV": UnitDefinition(symbol="MV", category=VOLTAGE, factor_to_base=Decimal("1000000")),
 }
 
 
@@ -39,7 +50,10 @@ class ConversionError(ValueError):
 
 def get_available_units() -> List[str]:
     """Return units in display order."""
-    return ["A", "mA", "µA", "V", "mV"]
+    return [
+        "pA", "nA", "µA", "mA", "A", "kA", "MA", "GA",
+        "µV", "mV", "V", "kV", "MV",
+    ]
 
 
 def normalize_number_string(raw_value: str) -> str:
@@ -48,12 +62,7 @@ def normalize_number_string(raw_value: str) -> str:
 
 
 def parse_numeric_value(raw_value: str) -> Decimal:
-    """
-    Parse a numeric string into Decimal.
-
-    Raises:
-        ConversionError: if the value is empty or invalid.
-    """
+    """Parse a numeric string into Decimal."""
     prepared = normalize_number_string(raw_value)
     if not prepared:
         raise ConversionError("Помилка: введіть числове значення")
@@ -65,12 +74,7 @@ def parse_numeric_value(raw_value: str) -> Decimal:
 
 
 def validate_units(from_unit: str, to_unit: str) -> None:
-    """
-    Validate that both units exist and belong to the same physical category.
-
-    Raises:
-        ConversionError: if the units are missing or incompatible.
-    """
+    """Validate units compatibility."""
     if from_unit not in UNITS or to_unit not in UNITS:
         raise ConversionError("Помилка: невідома одиниця вимірювання")
 
@@ -79,12 +83,7 @@ def validate_units(from_unit: str, to_unit: str) -> None:
 
 
 def convert_value(value: Decimal, from_unit: str, to_unit: str) -> Decimal:
-    """
-    Convert a value between compatible units.
-
-    Raises:
-        ConversionError: if units are incompatible.
-    """
+    """Convert a value between compatible units."""
     validate_units(from_unit, to_unit)
 
     from_def = UNITS[from_unit]
@@ -96,13 +95,7 @@ def convert_value(value: Decimal, from_unit: str, to_unit: str) -> Decimal:
 
 
 def format_decimal(value: Decimal) -> str:
-    """
-    Format Decimal without trailing zeros.
-
-    Examples:
-        1.000000 -> 1
-        0.500000 -> 0.5
-    """
+    """Format Decimal without trailing zeros."""
     normalized = value.normalize()
 
     if normalized == normalized.to_integral():
@@ -112,12 +105,7 @@ def format_decimal(value: Decimal) -> str:
 
 
 def convert_raw_value(raw_value: str, from_unit: str, to_unit: str) -> str:
-    """
-    Convert raw string input and return formatted string result.
-
-    Raises:
-        ConversionError: if parsing or conversion fails.
-    """
+    """Convert raw string input and return formatted result."""
     numeric_value = parse_numeric_value(raw_value)
     converted = convert_value(numeric_value, from_unit, to_unit)
     return format_decimal(converted)
