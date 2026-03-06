@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QFileDialog,
     QHeaderView,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
@@ -20,7 +21,6 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
-    QHBoxLayout,
     QWidget,
 )
 
@@ -32,7 +32,6 @@ from converter import (
     get_available_units,
 )
 
-
 VALUE_COLUMN = 0
 FROM_COLUMN = 1
 TO_COLUMN = 2
@@ -41,7 +40,7 @@ STATUS_COLUMN = 4
 
 COLUMN_HEADERS = ["Значення", "Звідки", "Куди", "Результат", "Статус"]
 
-DEFAULT_ROW_COUNT = 5
+DEFAULT_ROW_COUNT = 10
 
 
 class ConverterMainWindow(QMainWindow):
@@ -101,11 +100,18 @@ class ConverterMainWindow(QMainWindow):
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.AllEditTriggers)
         self.table.verticalHeader().setVisible(True)
         self.table.verticalHeader().setDefaultSectionSize(34)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(VALUE_COLUMN, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(FROM_COLUMN, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(TO_COLUMN, QHeaderView.ResizeMode.ResizeToContents)
         self.table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(VALUE_COLUMN, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(FROM_COLUMN, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(TO_COLUMN, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(RESULT_COLUMN, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(STATUS_COLUMN, QHeaderView.ResizeMode.Stretch)
+
+        self.table.setColumnWidth(VALUE_COLUMN, 140)
+        self.table.setColumnWidth(FROM_COLUMN, 120)
+        self.table.setColumnWidth(TO_COLUMN, 120)
 
         main_layout.addWidget(self.table)
 
@@ -195,17 +201,22 @@ class ConverterMainWindow(QMainWindow):
             }
 
             QComboBox {
-                 border: 1px solid #cfd8e3;
-                 border-radius: 6px;
-                 padding: 4px 8px;
-                 background: #ffffff;
-                 color: #111827;
-                 min-height: 24px;
-                 min-width: 90px;
+                background: #ffffff;
+                color: #111827;
+                border: 1px solid #cfd8e3;
+                border-radius: 6px;
+                padding: 4px 8px;
+                min-height: 24px;
+                min-width: 90px;
             }
 
             QComboBox:hover {
                 border-color: #93b4da;
+            }
+
+            QComboBox::drop-down {
+                border: none;
+                width: 24px;
             }
 
             QComboBox QAbstractItemView {
@@ -213,6 +224,13 @@ class ConverterMainWindow(QMainWindow):
                 color: #111827;
                 selection-background-color: #dbeafe;
                 selection-color: #111827;
+                border: 1px solid #cfd8e3;
+            }
+
+            QStatusBar {
+                background: #ffffff;
+                border-top: 1px solid #d7dce3;
+                color: #374151;
             }
             """
         )
@@ -314,7 +332,9 @@ class ConverterMainWindow(QMainWindow):
             if self._convert_row(row):
                 success_count += 1
 
-        self.info_label.setText(f"Оброблено рядків: {self.table.rowCount()}, успішно: {success_count}")
+        self.info_label.setText(
+            f"Оброблено рядків: {self.table.rowCount()}, успішно: {success_count}"
+        )
         self.status_bar.showMessage("Конвертацію завершено", 4000)
 
     def export_rows(self) -> None:
@@ -343,6 +363,7 @@ class ConverterMainWindow(QMainWindow):
 
         try:
             from excel_export import export_to_excel
+
             export_to_excel(file_path, meaningful_rows)
         except ValueError as exc:
             self._show_warning(str(exc))
@@ -374,6 +395,7 @@ class ConverterMainWindow(QMainWindow):
     def _create_unit_combo(self, current_unit: str) -> QComboBox:
         """Create a combo box for unit selection."""
         combo = QComboBox()
+        combo.setMinimumWidth(90)
         combo.addItems(self._available_units)
         combo.setCurrentText(current_unit)
         combo.currentIndexChanged.connect(self._on_combo_changed)
@@ -397,7 +419,10 @@ class ConverterMainWindow(QMainWindow):
             return
 
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, FROM_COLUMN) is sender or self.table.cellWidget(row, TO_COLUMN) is sender:
+            if (
+                self.table.cellWidget(row, FROM_COLUMN) is sender
+                or self.table.cellWidget(row, TO_COLUMN) is sender
+            ):
                 self._convert_row(row)
                 break
 
@@ -468,10 +493,23 @@ class ConverterMainWindow(QMainWindow):
                     f"""
                     QComboBox {{
                         background: {color.name()};
+                        color: #111827;
                         border: 1px solid #cfd8e3;
                         border-radius: 6px;
                         padding: 4px 8px;
                         min-height: 24px;
+                        min-width: 90px;
+                    }}
+                    QComboBox::drop-down {{
+                        border: none;
+                        width: 24px;
+                    }}
+                    QComboBox QAbstractItemView {{
+                        background: #ffffff;
+                        color: #111827;
+                        selection-background-color: #dbeafe;
+                        selection-color: #111827;
+                        border: 1px solid #cfd8e3;
                     }}
                     """
                 )
