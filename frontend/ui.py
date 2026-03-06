@@ -195,21 +195,24 @@ class ConverterMainWindow(QMainWindow):
             }
 
             QComboBox {
-                border: 1px solid #cfd8e3;
-                border-radius: 6px;
-                padding: 4px 8px;
-                background: #ffffff;
-                min-height: 24px;
+                 border: 1px solid #cfd8e3;
+                 border-radius: 6px;
+                 padding: 4px 8px;
+                 background: #ffffff;
+                 color: #111827;
+                 min-height: 24px;
+                 min-width: 90px;
             }
 
             QComboBox:hover {
                 border-color: #93b4da;
             }
 
-            QStatusBar {
+            QComboBox QAbstractItemView {
                 background: #ffffff;
-                border-top: 1px solid #d7dce3;
-                color: #374151;
+                color: #111827;
+                selection-background-color: #dbeafe;
+                selection-color: #111827;
             }
             """
         )
